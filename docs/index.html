@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>画像メタデータ解析・削除ツール v11</title>
+    <title>画像メタデータ解析・削除ツール v12</title>
     <style>
         :root {
             --bg-color: #1a1a1a;
@@ -20,7 +20,6 @@
             --error-color: #dc3545;
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
-
         body {
             font-family: var(--font-family);
             line-height: 1.6;
@@ -29,7 +28,6 @@
             background-color: var(--bg-color);
             color: var(--text-color);
         }
-
         .container {
             max-width: 900px;
             margin: auto;
@@ -38,19 +36,16 @@
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         }
-
         h1 {
             text-align: center;
             color: #fff;
             margin-top: 0;
         }
-
         .controls {
             display: flex;
             gap: 15px;
             margin-bottom: 20px;
         }
-
         .custom-button {
             flex-grow: 1;
             background-color: var(--primary-color);
@@ -62,37 +57,19 @@
             padding: 12px 15px;
             transition: background-color 0.2s ease, transform 0.1s ease;
         }
-
-        .custom-button:hover {
-            background-color: var(--primary-hover-color);
-        }
-        
+        .custom-button:hover { background-color: var(--primary-hover-color); }
         .delete-btn {
             background-color: var(--secondary-color);
             margin-top: 15px;
         }
-        
-        .delete-btn:hover {
-            background-color: var(--secondary-hover-color);
-        }
-        
+        .delete-btn:hover { background-color: var(--secondary-hover-color); }
         .custom-button:disabled {
             background-color: #555;
             cursor: not-allowed;
         }
-
-        .custom-button:active {
-            transform: scale(0.98);
-        }
-        
-        input[type="file"] {
-            display: none;
-        }
-
-        #results {
-            margin-top: 20px;
-        }
-
+        .custom-button:active { transform: scale(0.98); }
+        input[type="file"] { display: none; }
+        #results { margin-top: 20px; }
         .result-item {
             background-color: var(--bg-color);
             border: 1px solid var(--border-color);
@@ -100,7 +77,6 @@
             margin-bottom: 20px;
             border-radius: 8px;
         }
-
         .result-item img {
             max-width: 100%;
             height: auto;
@@ -108,7 +84,6 @@
             margin-bottom: 15px;
             border-radius: 5px;
         }
-        
         .metadata-container h3 {
             margin-top: 0;
             margin-bottom: 10px;
@@ -116,7 +91,6 @@
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 5px;
         }
-
         .metadata {
             font-family: "SF Mono", "Consolas", "Menlo", monospace;
             white-space: pre-wrap;
@@ -127,16 +101,11 @@
             border: 1px solid var(--border-color);
             font-size: 0.9em;
         }
-        
-        .metadata-entry {
-            margin-bottom: 8px;
-        }
-
+        .metadata-entry { margin-bottom: 8px; }
         .metadata-key { font-weight: bold; color: var(--key-color); }
         .stealth-key { font-weight: bold; color: var(--key-stealth-color); }
         .not-found-key { font-weight: bold; color: var(--key-not-found-color); }
         .error-key { font-weight: bold; color: var(--error-color); }
-        
         .status-message {
             text-align: center;
             font-size: 18px;
@@ -148,23 +117,18 @@
     <script src="pako.min.js"></script>
 </head>
 <body>
-
     <div class="container">
         <h1>画像メタデータ解析・削除ツール 🖼️</h1>
-        
         <div class="controls">
             <button id="fileSelectBtn" class="custom-button">ファイルを選択</button>
             <button id="folderSelectBtn" class="custom-button">フォルダを選択</button>
         </div>
-        
         <input type="file" id="fileInput" multiple accept="image/jpeg, image/png, image/webp">
         <input type="file" id="folderInput" webkitdirectory>
-        
         <div id="results">
              <p class="status-message">ファイルまたはフォルダを選択してください</p>
         </div>
     </div>
-
     <script>
         const fileInput = document.getElementById('fileInput');
         const folderInput = document.getElementById('folderInput');
@@ -216,6 +180,7 @@
             });
             resultItem.appendChild(img);
             await p1;
+
             const metadataContainer = document.createElement('div');
             metadataContainer.className = 'metadata-container';
             metadataContainer.innerHTML = `<h3>メタデータ: ${escapeHtml(file.name)}</h3>`;
@@ -273,10 +238,14 @@
 
                     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     const pixels = imageData.data;
+
+                    // ★★★ LSBランダム化処理 ★★★
                     for (let i = 0; i < pixels.length; i += 4) {
-                        pixels[i]   = pixels[i] & 0xFE;
-                        pixels[i+1] = pixels[i+1] & 0xFE;
-                        pixels[i+2] = pixels[i+2] & 0xFE;
+                        // R,G,BのLSBをランダムな0か1で上書き
+                        pixels[i]   = (pixels[i]   & 0xFE) | (Math.random() < 0.5 ? 0 : 1);
+                        pixels[i+1] = (pixels[i+1] & 0xFE) | (Math.random() < 0.5 ? 0 : 1);
+                        pixels[i+2] = (pixels[i+2] & 0xFE) | (Math.random() < 0.5 ? 0 : 1);
+                        // Alphaは不透明に固定
                         pixels[i+3] = 255;
                     }
                     ctx.putImageData(imageData, 0, 0);
@@ -317,19 +286,15 @@
             try {
                 const buffer = await file.arrayBuffer();
                 
-                // ★★★ WEBPの複数EXIF/XMPチャンク対応 ★★★
                 if (/\.webp$/i.test(file.name)) {
                     const webpChunks = parseWebP(new Uint8Array(buffer));
-                    
                     if (webpChunks.exifChunks.length > 0) {
                         webpChunks.exifChunks.forEach((chunk, i) => {
                              try {
                                  const tags = ExifReader.load(chunk.data.buffer, { expanded: true });
                                  if (tags?.exif?.UserComment?.value) results.push({ key: `WEBP EXIF #${i+1} (UserComment)`, value: parseUserComment(tags.exif.UserComment.value) });
                                  if (tags?.ifd0?.ImageDescription?.description) results.push({ key: `WEBP EXIF #${i+1} (ImageDescription)`, value: tags.ifd0.ImageDescription.description });
-                             } catch (e) {
-                                 results.push({ key: `WEBP EXIF #${i+1} 解析エラー`, value: e.message, isError: true });
-                             }
+                             } catch (e) { results.push({ key: `WEBP EXIF #${i+1} 解析エラー`, value: e.message, isError: true }); }
                         });
                     }
                     if (webpChunks.xmpChunks.length > 0) {
@@ -337,28 +302,20 @@
                              try {
                                  const xmpText = new TextDecoder().decode(chunk.data);
                                  results.push({ key: `WEBP XMP #${i+1}`, value: formatXml(xmpText) });
-                             } catch (e) {
-                                 results.push({ key: `WEBP XMP #${i+1} 解析エラー`, value: e.message, isError: true });
-                             }
+                             } catch (e) { results.push({ key: `WEBP XMP #${i+1} 解析エラー`, value: e.message, isError: true }); }
                         });
                     }
                 } else {
-                    // JPEGや他の形式の既存のメタデータ解析
                     if (typeof ExifReader !== 'undefined' && ExifReader) {
                         try {
                             const tags = ExifReader.load(buffer, { expanded: true });
                             if (tags?.exif?.UserComment?.value) results.push({ key: 'EXIF (UserComment)', value: parseUserComment(tags.exif.UserComment.value) });
                             if (tags?.ifd0?.ImageDescription?.description) results.push({ key: 'EXIF (ImageDescription)', value: tags.ifd0.ImageDescription.description });
                             if (tags?.xmp?.description) results.push({ key: 'XMP', value: formatXml(tags.xmp.description) });
-                        } catch (exifError) {
-                            results.push({ key: 'EXIF/XMP 解析エラー', value: exifError.message, isError: true });
-                        }
-                    } else {
-                        results.push({ key: 'ライブラリエラー', value: 'ExifReaderが読み込めませんでした。', isError: true });
-                    }
+                        } catch (exifError) { results.push({ key: 'EXIF/XMP 解析エラー', value: exifError.message, isError: true }); }
+                    } else { results.push({ key: 'ライブラリエラー', value: 'ExifReaderが読み込めませんでした。', isError: true }); }
                 }
                 
-                // JPEGとPNGのチャンク解析
                 if (/\.(jpe?g)$/i.test(file.name)) {
                     const comMarkers = findJpegComMarkers(new Uint8Array(buffer));
                     comMarkers.forEach((com, i) => results.push({ key: `JPEG COMマーカー[${i+1}]`, value: com }));
@@ -371,7 +328,6 @@
                         }
                     });
 
-                    // PNGのステガノグラフィ解析
                     const canvas = document.createElement('canvas');
                     canvas.width = imageElement.naturalWidth;
                     canvas.height = imageElement.naturalHeight;
@@ -386,40 +342,15 @@
                             } else {
                                 results.push({ key: 'Stealth PNG Info', value: 'チェックしましたが、埋め込みデータは見つかりませんでした。', isNotFound: true });
                             }
-                        } catch (e) {
-                            results.push({key: 'Canvas読み取りエラー', value: 'ピクセルデータを読めませんでした。', isError: true});
-                        }
-                    } else {
-                        results.push({ key: 'Stealth PNG Info', value: '画像サイズが0のためチェックできませんでした。', isNotFound: true });
-                    }
+                        } catch (e) { results.push({key: 'Canvas読み取りエラー', value: 'ピクセルデータを読めませんでした。', isError: true}); }
+                    } else { results.push({ key: 'Stealth PNG Info', value: '画像サイズが0のためチェックできませんでした。', isNotFound: true });}
                 }
-            } catch (error) {
-                results.push({ key: '致命的な解析エラー', value: error.message, isError: true });
-            }
+            } catch (error) { results.push({ key: '致命的な解析エラー', value: error.message, isError: true }); }
             return results;
         }
-
-        // --- ヘルパー関数 ---
-        function parseWebP(u8) {
-            const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
-            let off = 12;
-            const exifChunks = [];
-            const xmpChunks = [];
-            while (off + 8 <= u8.length) {
-                const id = String.fromCharCode(u8[off], u8[off+1], u8[off+2], u8[off+3]);
-                const size = dv.getUint32(off + 4, true);
-                const dataOff = off + 8;
-                const dataEnd = dataOff + size;
-                if (dataEnd > u8.length) break;
-                const data = u8.slice(dataOff, dataEnd);
-                if (id === 'EXIF') exifChunks.push({ offset: off, size, data });
-                else if (id === 'XMP ') xmpChunks.push({ offset: off, size, data });
-                off = dataEnd + (size & 1);
-            }
-            return { exifChunks, xmpChunks };
-        }
         
-        // 変更がないため省略した関数の実装をここにペースト
+        // --- ヘルパー関数 ---
+        function parseWebP(u8) { const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength); let off = 12; const exifChunks = [], xmpChunks = []; while (off + 8 <= u8.length) { const id = String.fromCharCode(u8[off], u8[off+1], u8[off+2], u8[off+3]); const size = dv.getUint32(off + 4, true); const dataOff = off + 8; const dataEnd = dataOff + size; if (dataEnd > u8.length) break; const data = u8.slice(dataOff, dataEnd); if (id === 'EXIF') exifChunks.push({ offset: off, size, data }); else if (id === 'XMP ') xmpChunks.push({ offset: off, size, data }); off = dataEnd + (size & 1); } return { exifChunks, xmpChunks }; }
         function findStealthInfo(imageData) { const { data, width, height } = imageData; let bit_stream_a = '', bit_stream_rgb = ''; for (let x = 0; x < width; x++) { for (let y = 0; y < height; y++) { const i = (y * width + x) * 4; bit_stream_rgb += (data[i] & 1).toString() + (data[i+1] & 1).toString() + (data[i+2] & 1).toString(); bit_stream_a += (data[i+3] & 1).toString(); } } const result_a = processStealthStream(bit_stream_a, 'Alpha'); if (result_a) return result_a; const result_rgb = processStealthStream(bit_stream_rgb, 'RGB'); if (result_rgb) return result_rgb; return null; }
         function processStealthStream(stream, mode) { const signatures = { 'stealth_pnginfo': { mode: 'Alpha', compressed: false }, 'stealth_pngcomp': { mode: 'Alpha', compressed: true }, 'stealth_rgbinfo': { mode: 'RGB', compressed: false }, 'stealth_rgbcomp': { mode: 'RGB', compressed: true }, }; const sig_len = 'stealth_pnginfo'.length * 8; if (stream.length < sig_len + 32) return null; const sig_binary = stream.substring(0, sig_len); const sig_text = binaryToText(sig_binary); if (!(sig_text in signatures) || signatures[sig_text].mode !== mode) return null; const compressed = signatures[sig_text].compressed; let current_stream = stream.substring(sig_len); const len_binary = current_stream.substring(0, 32); const param_len = parseInt(len_binary, 2); current_stream = current_stream.substring(32); if (current_stream.length < param_len) return null; const binary_data = current_stream.substring(0, param_len); const byte_array = new Uint8Array(binary_data.length / 8); for (let i = 0; i < byte_array.length; i++) { byte_array[i] = parseInt(binary_data.substring(i * 8, (i + 1) * 8), 2); } try { let decoded_data; if (compressed) { if (typeof pako === 'undefined') return { data: "[pako.js is not loaded, cannot decompress]", mode: mode, compressed: true }; decoded_data = pako.inflate(byte_array, { to: 'string' }); } else { decoded_data = new TextDecoder('utf-8', { fatal: true }).decode(byte_array); } return { data: decoded_data, mode: mode, compressed: compressed }; } catch (e) { return { data: "[decoding error]", mode: mode, compressed: compressed }; } }
         function binaryToText(binaryStr) { try { const bytes = new Uint8Array(binaryStr.length / 8); for (let i = 0; i < bytes.length; i++) { bytes[i] = parseInt(binaryStr.substr(i * 8, 8), 2); } return new TextDecoder('utf-8', { "fatal": false }).decode(bytes); } catch { return ''; } }
@@ -428,7 +359,6 @@
         function parseUserComment(commentArray) { if (commentArray.length <= 8) return ''; const textBytes = new Uint8Array(commentArray.slice(8)); const code = new TextDecoder('ascii').decode(new Uint8Array(commentArray.slice(0, 5))); if (code.startsWith('ASCII')) return new TextDecoder('ascii').decode(textBytes); if (code.startsWith('JIS')) return new TextDecoder('sjis').decode(textBytes); try { return new TextDecoder('utf-8', { fatal: true }).decode(textBytes); } catch (e) { return new TextDecoder().decode(textBytes) + " (デコードエラーの可能性あり)"; } }
         function escapeHtml(str) { if (typeof str !== "string") return ""; return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
         function formatXml(xml) { if (typeof xml !== 'string') return ''; let formatted = '', pad = 0; xml = xml.replace(/(>)(<)(\/*)/g, '$1\r\n$2$3'); xml.split('\r\n').forEach(node => { let indent = 0; if (node.match(/.+<\/\w[^>]*>$/)) indent = 0; else if (node.match(/^<\/\w/)) { if (pad !== 0) pad -= 1; } else if (node.match(/^<\w[^>]*[^\/]>.*$/)) indent = 1; let padding = ''; for (let i = 0; i < pad; i++) padding += '  '; formatted += padding + node + '\r\n'; pad += indent; }); return formatted.trim(); }
-
     </script>
 </body>
 </html>
